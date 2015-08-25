@@ -8,6 +8,7 @@ public class IBeaconModel {
     String modelName;
     String macAddress;
     int rssi;
+    int power;
     String uuid;
     int major;
     int minor;
@@ -17,6 +18,7 @@ public class IBeaconModel {
         this.modelName = "<null>";
         this.macAddress = "00:00:00:00:00:00";
         this.rssi = -100;
+        this.power = -100;
         this.uuid = "<null>";
         this.major = -1;
         this.minor = -1;

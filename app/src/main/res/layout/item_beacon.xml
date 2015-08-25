@@ -43,7 +43,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/kontakt_id"
         android:layout_toEndOf="@id/creeper"
-        android:layout_alignParentEnd="true"
         tools:text="-69" />
 
     <TextView

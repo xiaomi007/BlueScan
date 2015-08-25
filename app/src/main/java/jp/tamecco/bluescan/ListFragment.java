@@ -26,12 +26,16 @@ import com.neovisionaries.bluetooth.ble.advertising.IBeacon;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
 import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 import rx.subjects.AsyncSubject;
+import rx.subjects.PublishSubject;
 
 /**
  * Created by xiaomi on 15/08/24.
@@ -49,7 +53,7 @@ public class ListFragment extends Fragment {
     private RecyclerView recyclerView;
     private ListAdapter listAdapter;
 
-    AsyncSubject<ScanResult> asyncSubject = AsyncSubject.create();
+    PublishSubject<ScanResult> publishSubject = PublishSubject.create();
 
     public static ListFragment newInstance() {
 
@@ -87,18 +91,18 @@ public class ListFragment extends Fragment {
         listAdapter.setHasStableIds(true);
         recyclerView.setAdapter(listAdapter);
 
+
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        scanCallback = new ScanCallback() {
-            @Override
-            public void onScanResult(int callbackType, ScanResult result) {
-                super.onScanResult(callbackType, result);
-                Observable.just(result).map(new Func1<ScanResult, IBeaconModel>() {
+
+        publishSubject.asObservable()
+                .map(new Func1<ScanResult, IBeaconModel>() {
                     @Override
                     public IBeaconModel call(ScanResult scanResult) {
+                        Log.d(TAG, "call received");
                         int rssi = scanResult.getRssi();
                         BluetoothDevice device = scanResult.getDevice();
 
@@ -113,17 +117,31 @@ public class ListFragment extends Fragment {
                         iBeaconModel.modelName = device.getName();
                         iBeaconModel.macAddress = device.getAddress();
                         iBeaconModel.rssi = rssi;
-                        iBeaconModel.uuid = iBeacon.getUUID().toString();
-                        iBeaconModel.major = iBeacon.getMajor();
-                        iBeaconModel.minor = iBeacon.getMinor();
+                        if (iBeacon != null) {
+                            iBeaconModel.power = iBeacon.getPower();
+                            iBeaconModel.uuid = iBeacon.getUUID().toString();
+                            iBeaconModel.major = iBeacon.getMajor();
+                            iBeaconModel.minor = iBeacon.getMinor();
+                        }
+                        Log.d(TAG, "call ibeacon;" + iBeacon.toString());
                         return iBeaconModel;
                     }
-                }).take(10).toList().subscribe(new Action1<List<IBeaconModel>>() {
+                })
+                .buffer(1)
+                .subscribe(new Action1<List<IBeaconModel>>() {
                     @Override
                     public void call(List<IBeaconModel> iBeaconModels) {
+                        Log.d(TAG, "call size:" + iBeaconModels.size());
                         listAdapter.setiBeaconModels(iBeaconModels);
                     }
                 });
+
+        scanCallback = new ScanCallback() {
+            @Override
+            public void onScanResult(int callbackType, ScanResult result) {
+                super.onScanResult(callbackType, result);
+                Log.d(TAG, "onScanResult");
+                publishSubject.onNext(result);
             }
         };
     }
@@ -149,7 +167,8 @@ public class ListFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        bluetoothLeScanner.stopScan(scanCallback);
+        if (bluetoothLeScanner != null)
+            bluetoothLeScanner.stopScan(scanCallback);
     }
 
     @Override
@@ -164,7 +183,13 @@ public class ListFragment extends Fragment {
         Log.d(TAG, "onActivityResult req:" + requestCode);
         Log.d(TAG, "onActivityResult res:" + resultCode);
         if (BT_RESULT == requestCode && resultCode == -1) {
-            bluetoothLeScanner.startScan(scanCallback);
+            List<ScanFilter> scanFilters = new ArrayList<>();
+            scanFilters.add(new ScanFilter.Builder().setDeviceName("tLTb1507").build());
+            scanFilters.add(new ScanFilter.Builder().setDeviceName("Kontakt").build());
+            if (bluetoothLeScanner == null) {
+                bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+            }
+            bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback);
         }
     }
 

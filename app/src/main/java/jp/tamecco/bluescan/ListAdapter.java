@@ -49,7 +49,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.MyViewHolder> 
             myViewHolder.modelName.setText(ibeacon.modelName);
             myViewHolder.macAddress.setText(ibeacon.macAddress);
             myViewHolder.uuid.setText(ibeacon.uuid);
-            myViewHolder.rssi.setText("rssi:" + ibeacon.rssi);
+            myViewHolder.rssi.setText("rssi:" + ibeacon.rssi + ", power:" + ibeacon.power);
             myViewHolder.major.setText("Major:" + ibeacon.major);
             myViewHolder.minor.setText("Minor:" + ibeacon.minor);
         }
