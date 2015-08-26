@@ -25,6 +25,8 @@ import com.neovisionaries.bluetooth.ble.advertising.ADStructure;
 import com.neovisionaries.bluetooth.ble.advertising.IBeacon;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +35,7 @@ import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
+import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 import rx.subjects.AsyncSubject;
 import rx.subjects.PublishSubject;
@@ -127,10 +130,35 @@ public class ListFragment extends Fragment {
                         return iBeaconModel;
                     }
                 })
-                .buffer(1)
+
+                .distinct(new Func1<IBeaconModel, String>() {
+                    @Override
+                    public String call(IBeaconModel iBeaconModel) {
+                        return iBeaconModel.macAddress;
+                    }
+                })
+
+                .toSortedList(new Func2<IBeaconModel, IBeaconModel, Integer>() {
+                    @Override
+                    public Integer call(IBeaconModel iBeaconModel, IBeaconModel iBeaconModel2) {
+                        String mac1 = iBeaconModel.macAddress;
+                        String mac2 = iBeaconModel2.macAddress;
+                        return mac1.compareTo(mac2);
+                    }
+                })
+
                 .subscribe(new Action1<List<IBeaconModel>>() {
                     @Override
                     public void call(List<IBeaconModel> iBeaconModels) {
+                        /*Collections.sort(
+                                iBeaconModels,
+                                new Comparator<IBeaconModel>() {
+                                    @Override
+                                    public int compare(IBeaconModel lhs, IBeaconModel rhs) {
+                                        return lhs.macAddress.compareTo(rhs.macAddress);
+                                    }
+                                }
+                        );*/
                         Log.d(TAG, "call size:" + iBeaconModels.size());
                         listAdapter.setiBeaconModels(iBeaconModels);
                     }
