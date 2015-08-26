@@ -130,35 +130,26 @@ public class ListFragment extends Fragment {
                         return iBeaconModel;
                     }
                 })
-
+                .take(20)
                 .distinct(new Func1<IBeaconModel, String>() {
                     @Override
                     public String call(IBeaconModel iBeaconModel) {
                         return iBeaconModel.macAddress;
                     }
                 })
-
-                .toSortedList(new Func2<IBeaconModel, IBeaconModel, Integer>() {
-                    @Override
-                    public Integer call(IBeaconModel iBeaconModel, IBeaconModel iBeaconModel2) {
-                        String mac1 = iBeaconModel.macAddress;
-                        String mac2 = iBeaconModel2.macAddress;
-                        return mac1.compareTo(mac2);
-                    }
-                })
-
+                .toList()
                 .subscribe(new Action1<List<IBeaconModel>>() {
                     @Override
                     public void call(List<IBeaconModel> iBeaconModels) {
-                        /*Collections.sort(
+                        Collections.sort(
                                 iBeaconModels,
                                 new Comparator<IBeaconModel>() {
                                     @Override
                                     public int compare(IBeaconModel lhs, IBeaconModel rhs) {
-                                        return lhs.macAddress.compareTo(rhs.macAddress);
+                                        return lhs.rssi == rhs.rssi ? 0 : lhs.rssi < rhs.rssi ? 1 : -1;
                                     }
                                 }
-                        );*/
+                        );
                         Log.d(TAG, "call size:" + iBeaconModels.size());
                         listAdapter.setiBeaconModels(iBeaconModels);
                     }
